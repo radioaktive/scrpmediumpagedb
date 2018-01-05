@@ -238,5 +238,6 @@ async function scraper(startURL){
 };
 
 // alg0 start scraping // запускаем  на скрапинг
-scraper(startURL1).then(scraper(startURL2));
+scraper(startURL1);
+scraper(startURL2);
 
