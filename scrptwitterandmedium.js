@@ -54,14 +54,14 @@ function writeDB(results) {
     db.run('DROP TABLE IF EXISTS new');
 
     // alg10 save content from array to db // сохраняем контент из массива в базу данных
-    db.run('CREATE TABLE new (id INTEGER, user_id INTEGER UNSIGNED, slug VARCHAR (255), title VARCHAR (255), status SMALLINT, date DATETIME, modified DATETIME, content CLOB, excerpt CLOB, comment_status BOOLEAN, comment_count INTEGER, data CLOB, roles CLOB, link TEXT, time TEXT, keywords TEXT, likes TEXT)');
+    db.run('CREATE TABLE new (id INTEGER, user_id INTEGER UNSIGNED, slug VARCHAR (255), title VARCHAR (255), status SMALLINT, date DATETIME, modified DATETIME, content CLOB, excerpt CLOB, comment_status BOOLEAN, comment_count INTEGER, data CLOB, roles CLOB, link TEXT, time TEXT, keywords TEXT, likes INTEGER)');
     var stmt = db.prepare('INSERT INTO new VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     for (var i = 0; i < results.length; i++) {
       stmt.run(results[i]);
     };
     stmt.finalize();
     // в родную базу pagekit в таблицу pk_blog_post нужно предварительно добавить 1 раз столбцы link, time, keywords, likes, state.
-    db.run('CREATE TABLE IF NOT EXISTS pk_blog_post (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNSIGNED, slug VARCHAR (255), title VARCHAR (255), status SMALLINT, date DATETIME, modified DATETIME, content CLOB, excerpt CLOB, comment_status BOOLEAN, comment_count INTEGER, data CLOB, roles CLOB, link TEXT, time TEXT, keywords TEXT, likes TEXT, state TEXT)');
+    db.run('CREATE TABLE IF NOT EXISTS pk_blog_post (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNSIGNED, slug VARCHAR (255), title VARCHAR (255), status SMALLINT, date DATETIME, modified DATETIME, content CLOB, excerpt CLOB, comment_status BOOLEAN, comment_count INTEGER, data CLOB, roles CLOB, link TEXT, time TEXT, keywords TEXT, likes INTEGER, state TEXT)');
     db.run('UPDATE pk_blog_post set state = NULL');
 
     // alg output
@@ -199,6 +199,16 @@ const getText = async (link, website, browser) => {
 
       var date = getDate();
 
+      var likesSl = $(website.likeSelector).first().text();
+      //console.log(likesSl);
+      likesSl = likesSl.replace(/,/g, '');
+      likesSl = likesSl.replace(/\s+(?![^\d\s])/g, '');
+      var likes = parseInt(likesSl, 10);
+      if (isNaN(likes)) {
+        likes = 0;
+      }
+      var excerpt = likes + " лайков";
+
       var nn = null;
       // alg9 save content in an array and return it // сохраняем контент поста в массив и потом его возвращаем
       res.push(
@@ -210,7 +220,7 @@ const getText = async (link, website, browser) => {
           date, // 6 date
           date, // 7 modified
           elhtmls.join(" <br>"), // 8 content
-          "//",    // 9 excerpt
+          excerpt,    // 9 excerpt
           "1", // 10 comment_status,
           "0", // 11 comment_count
           '{"title":null,"markdown":false,"image":{"src":"","alt":""}}', // 12 data
@@ -218,7 +228,7 @@ const getText = async (link, website, browser) => {
           link, // link
           $(website.timeSelector).first().text(), // time
           keywords.join(), // keywords
-          $(website.likeSelector).first().text() // likes
+          likes // likes
         );
   };
 
@@ -311,8 +321,8 @@ async function scrapeWebsitesParallel(websites) {
 */
 
 async function scrapeWebsites(websites) {
-  const browser = await puppeteer.launch({headless: false});
-  // const browser = await puppeteer.launch({headless: false, args: ['--no-sandbox']}); // for linux from root
+  	//const browser = await puppeteer.launch({headless: false});
+	const browser = await puppeteer.launch({headless: false, args: ['--no-sandbox']}); // for linux with root
   // alg1 start scraping websites  // запускаем сайты на скрапинг, в данном случае по идее сайты должны были запускаться последовательно, но работает параллельно
   for (let i = 0; i < websites.length; i++) {
     await scrapeWebsite(websites[i], browser);
