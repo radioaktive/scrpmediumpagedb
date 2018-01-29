@@ -75,6 +75,20 @@ function writeDB(results) {
 };
 
 
+function hashCode(string) {
+  var hash = 0;
+  if (string.length === 0) return hash;
+  for (i = 0; i < string.length; i++) {
+    chr   = string.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+    hash = Math.abs(hash);
+  }
+  return hash;
+};
+
+
+
 function translit(txt) {
   var str = txt;
   var space = '-';
@@ -195,7 +209,7 @@ const getText = async (link, website, browser) => {
 
       //var slug = title.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s/ig, '-');
 
-      var slug = translit(title);
+      var slug = hashCode(link) + "-" + translit(title);
 
       var date = getDate();
 
@@ -321,8 +335,7 @@ async function scrapeWebsitesParallel(websites) {
 */
 
 async function scrapeWebsites(websites) {
-  	//const browser = await puppeteer.launch({headless: false});
-	const browser = await puppeteer.launch({headless: false, args: ['--no-sandbox']}); // for linux with root
+  const browser = await puppeteer.launch({headless: false});
   // alg1 start scraping websites  // запускаем сайты на скрапинг, в данном случае по идее сайты должны были запускаться последовательно, но работает параллельно
   for (let i = 0; i < websites.length; i++) {
     await scrapeWebsite(websites[i], browser);
